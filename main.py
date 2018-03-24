@@ -5,6 +5,10 @@ import glob
 import re
 from pythainlp.tokenize import word_tokenize
 from pythainlp.tag import pos_tag
+from pythainlp.corpus import stopwords
+import heapq
+
+stopwords = stopwords.words('thai')
 
 examples_path = 'Examples\\'
 question_list_filename = examples_path + 'question_list.txt'
@@ -56,12 +60,12 @@ for document in document_list:
         # except:
         #     pass
         # document_data.append(tagged_paragraph)
-        document_data.append(tokenized_paragraph)
+        filtered_words = [word for word in tokenized_paragraph if word not in stopwords]
+        document_data.append(filtered_words)
         print(tokenized_paragraph)
     count_doc = count_doc + 1
-    if count_doc > 2:
-        break
-
+    # if count_doc > 28:
+    #     break
 print(document_data)
 
 # print("")
@@ -71,7 +75,8 @@ numeric_question_keywords = ['กี่', 'เท่าไหร่', 'เท่
 location_question_keywords = ['ที่ใด', 'แห่งใด', 'ที่ไหน', 'บริเวณใด', 'จังหวัดใด']
 person_question_keywords = ['ตือใคร', 'ใครเป็น', 'ใคร', 'ผู้ใด', 'ชนชาติใด', 'ชื่ออะไร']
 
-this_question = question_list[0]
+KEE_question_index_list = [1, 3, 4, 5, 6, 8]
+this_question = question_list[4]
 question_num = this_question[0]
 question_text = this_question[1]
 
@@ -98,8 +103,8 @@ if not question_type:
             question_keyword = keyword
             break
 
-question_text = question_text.replace(question_keyword, '')
 tokenized_question_text = word_tokenize(text=question_text, engine='deepcut')
+# question_text = question_text.replace(question_keyword, '')
 print(tokenized_question_text)
 print(question_type, question_keyword)
 
@@ -118,18 +123,40 @@ for paragraph in document_data:
             found_paragraph_list.append(paragraph)
             # print(matching)
 
-
 unique_found_paragraph = [list(x) for x in set(tuple(x) for x in found_paragraph_list)]
-# print(unique_found_paragraph)
+print("unique_found_paragraph", unique_found_paragraph)
+print("found_paragraph_list", found_paragraph_list)
+print("-----------------")
+for p in unique_found_paragraph:
+    para_text = ''.join(p)
+    print(para_text)
+print("-----------------")
 
-occurence = [0] * len(unique_found_paragraph)
+peak_occurence = [0] * len(unique_found_paragraph)
+distributed_occurence = [0] * len(unique_found_paragraph)
 for idx, para in enumerate(unique_found_paragraph):
     for word in tokenized_question_text:
-        occurence[idx] += para.count(word)
-        # print(para.count(word), word, para)
+        peak_occurence[idx] += para.count(word)
+        if (para.count(word) > 0):
+            distributed_occurence[idx] = distributed_occurence[idx] + 1
+        print(para.count(word), word, para)
+print("peak_occurence", peak_occurence)
+concept = unique_found_paragraph[peak_occurence.index(max(peak_occurence))]
+concept2 = unique_found_paragraph[distributed_occurence.index(max(distributed_occurence))]
+max_distributed = heapq.nlargest(5, distributed_occurence)
+for idx in max_distributed:
+    print("concept2", unique_found_paragraph[idx])
+print("concept", concept)
 
-print(occurence)
-print(unique_found_paragraph[occurence.index(max(occurence))])
+if question_keyword == 'กี่':
+    main_index = tokenized_question_text.index(question_keyword)
+    scoped_tokenized_question_text = tokenized_question_text[:main_index]
+    print("scoped_tokenized_question_text", scoped_tokenized_question_text)
+    c_index = concept.index(scoped_tokenized_question_text[-1])
+    keyword_index = concept.index(unit_keyword)
+    scoped_concept = concept[c_index+1:keyword_index+1]
+    print("scoped_concept", scoped_concept)
+
 
 # for pair in question_list:
 #     try:
