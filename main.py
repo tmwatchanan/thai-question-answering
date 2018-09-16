@@ -7,6 +7,7 @@ from pythainlp.tokenize import word_tokenize
 from pythainlp.tag import pos_tag
 from pythainlp.corpus import stopwords
 import heapq
+from gensim.models import Word2Vec
 
 stopwords = stopwords.words('thai')
 
@@ -60,13 +61,18 @@ for document in document_list:
         # except:
         #     pass
         # document_data.append(tagged_paragraph)
-        filtered_words = [word for word in tokenized_paragraph if word not in stopwords]
-        document_data.append(filtered_words)
+        # filtered_words = [word for word in tokenized_paragraph if word not in stopwords]
+        # document_data.append(filtered_words)
+        document_data.append(tokenized_paragraph)
         print(tokenized_paragraph)
     count_doc = count_doc + 1
     # if count_doc > 28:
     #     break
 print(document_data)
+
+# Word2Vec =============================================================================================================
+model = Word2Vec(document_data, size=100, window=3, min_count=0)
+# Word2Vec =============================================================================================================
 
 # print("")
 # print(document_data)
@@ -148,6 +154,15 @@ for idx in max_distributed:
     print("concept2", unique_found_paragraph[idx])
 print("concept", concept)
 
+print(tokenized_question_text)
+
+aa=model.similar_by_word('เป็น')
+print(aa)
+aa=model['เป็น']
+print(aa)
+print(model.similarity('รถ', 'รถ'))
+exit(1)
+
 if question_keyword == 'กี่':
     main_index = tokenized_question_text.index(question_keyword)
     scoped_tokenized_question_text = tokenized_question_text[:main_index]
@@ -156,7 +171,6 @@ if question_keyword == 'กี่':
     keyword_index = concept.index(unit_keyword)
     scoped_concept = concept[c_index+1:keyword_index+1]
     print("scoped_concept", scoped_concept)
-
 
 # for pair in question_list:
 #     try:
